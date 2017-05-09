@@ -194,4 +194,14 @@
         <item name="windowActionBarOverlay">true</item>
     </style>
 
+    <style name="AppTheme.Nicoru" parent="AppTheme">
+        <item name="status_favourite_active_drawable">@drawable/ic_nicoru</item>
+        <item name="status_favourite_inactive_drawable">@drawable/ic_nicoru_status</item>
+    </style>
+
+    <style name="AppTheme.Nicoru.Light" parent="AppTheme.Light">
+        <item name="status_favourite_active_drawable">@drawable/ic_nicoru</item>
+        <item name="status_favourite_inactive_drawable">@drawable/ic_nicoru_status</item>
+    </style>
+
 </resources>

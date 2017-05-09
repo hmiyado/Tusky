@@ -22,6 +22,7 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 
 import com.keylesspalace.tusky.fragment.PreferencesFragment;
+import com.keylesspalace.tusky.util.ThemeUtils;
 
 public class PreferencesActivity extends BaseActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -38,9 +39,7 @@ public class PreferencesActivity extends BaseActivity
         }
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        if (preferences.getBoolean("lightTheme", false)) {
-            setTheme(R.style.AppTheme_Light);
-        }
+        setTheme(ThemeUtils.getStyle(this));
         preferences.registerOnSharedPreferenceChangeListener(this);
 
         getFragmentManager().beginTransaction()

@@ -19,16 +19,20 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.preference.PreferenceManager;
 import android.support.annotation.AttrRes;
 import android.support.annotation.ColorInt;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.StyleRes;
 import android.support.v4.content.ContextCompat;
 import android.util.TypedValue;
 import android.widget.ImageView;
 
+import com.keylesspalace.tusky.R;
+
 public class ThemeUtils {
     public static Drawable getDrawable(Context context, @AttrRes int attribute,
-            @DrawableRes int fallbackDrawable) {
+                                       @DrawableRes int fallbackDrawable) {
         TypedValue value = new TypedValue();
         @DrawableRes int resourceId;
         if (context.getTheme().resolveAttribute(attribute, value, true)) {
@@ -39,8 +43,10 @@ public class ThemeUtils {
         return ContextCompat.getDrawable(context, resourceId);
     }
 
-    public static @DrawableRes int getDrawableId(Context context, @AttrRes int attribute,
-            @DrawableRes int fallbackDrawableId) {
+    public static
+    @DrawableRes
+    int getDrawableId(Context context, @AttrRes int attribute,
+                      @DrawableRes int fallbackDrawableId) {
         TypedValue value = new TypedValue();
         if (context.getTheme().resolveAttribute(attribute, value, true)) {
             return value.resourceId;
@@ -49,7 +55,9 @@ public class ThemeUtils {
         }
     }
 
-    public static @ColorInt int getColor(Context context, @AttrRes int attribute) {
+    public static
+    @ColorInt
+    int getColor(Context context, @AttrRes int attribute) {
         TypedValue value = new TypedValue();
         if (context.getTheme().resolveAttribute(attribute, value, true)) {
             return value.data;
@@ -64,5 +72,25 @@ public class ThemeUtils {
 
     public static void setDrawableTint(Context context, Drawable drawable, @AttrRes int attribute) {
         drawable.setColorFilter(getColor(context, attribute), PorterDuff.Mode.SRC_IN);
+    }
+
+    public static
+    @StyleRes
+    int getStyle(Context context) {
+        final boolean nicorable = true;
+        final boolean light = PreferenceManager.getDefaultSharedPreferences(context).getBoolean("LightTheme", false);
+        if (nicorable) {
+            if (light) {
+                return R.style.AppTheme_Nicoru_Light;
+            } else {
+                return R.style.AppTheme_Nicoru;
+            }
+        } else {
+            if (light) {
+                return R.style.AppTheme_Light;
+            } else {
+                return R.style.AppTheme;
+            }
+        }
     }
 }

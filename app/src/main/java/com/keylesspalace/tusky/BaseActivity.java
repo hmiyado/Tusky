@@ -41,6 +41,7 @@ import com.keylesspalace.tusky.network.MastodonAPI;
 import com.keylesspalace.tusky.network.TuskyAPI;
 import com.keylesspalace.tusky.util.Log;
 import com.keylesspalace.tusky.util.OkHttpUtils;
+import com.keylesspalace.tusky.util.ThemeUtils;
 
 import java.io.IOException;
 
@@ -74,14 +75,12 @@ public class BaseActivity extends AppCompatActivity {
         /* There isn't presently a way to globally change the theme of a whole application at
          * runtime, just individual activities. So, each activity has to set its theme before any
          * views are created. */
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("lightTheme", false)) {
-            setTheme(R.style.AppTheme_Light);
-        }
+        setTheme(ThemeUtils.getStyle(this));
     }
 
     @Override
     protected void onDestroy() {
-        if(mastodonApiDispatcher != null) mastodonApiDispatcher.cancelAll();
+        if (mastodonApiDispatcher != null) mastodonApiDispatcher.cancelAll();
         super.onDestroy();
     }
 

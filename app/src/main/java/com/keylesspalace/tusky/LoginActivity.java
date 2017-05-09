@@ -41,6 +41,7 @@ import com.keylesspalace.tusky.network.MastodonAPI;
 import com.keylesspalace.tusky.util.CustomTabsHelper;
 import com.keylesspalace.tusky.util.Log;
 import com.keylesspalace.tusky.util.OkHttpUtils;
+import com.keylesspalace.tusky.util.ThemeUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,27 +57,83 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity"; // logging tag
     private static String OAUTH_SCOPES = "read write follow";
-
+    @BindView(R.id.login_input) LinearLayout input;
+    @BindView(R.id.login_loading) LinearLayout loading;
+    @BindView(R.id.edit_text_domain) EditText editText;
+    @BindView(R.id.button_login) Button button;
+    @BindView(R.id.whats_an_instance) TextView whatsAnInstance;
     private SharedPreferences preferences;
-
     private String domain;
     private String clientId;
     private String clientSecret;
 
-    @BindView(R.id.login_input) LinearLayout input;
-    @BindView(R.id.login_loading) LinearLayout loading;
+    /** Make sure the user-entered text is just a fully-qualified domain name. */
+    @NonNull
+    private static String validateDomain(String s) {
+        // Strip any schemes out.
+        s = s.replaceFirst("http://", "");
+        s = s.replaceFirst("https://", "");
+        // If a username was included (e.g. username@example.com), just take what's after the '@'.
+        int at = s.indexOf('@');
+        if (at != -1) {
+            s = s.substring(at + 1);
+        }
+        return s.trim();
+    }
 
-    @BindView(R.id.edit_text_domain) EditText editText;
-    @BindView(R.id.button_login) Button button;
-    @BindView(R.id.whats_an_instance) TextView whatsAnInstance;
+    /**
+     * Chain together the key-value pairs into a query string, for either appending to a URL or
+     * as the content of an HTTP request.
+     */
+    @NonNull
+    private static String toQueryString(Map<String, String> parameters) {
+        StringBuilder s = new StringBuilder();
+        String between = "";
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+            s.append(between);
+            s.append(Uri.encode(entry.getKey()));
+            s.append("=");
+            s.append(Uri.encode(entry.getValue()));
+            between = "&";
+        }
+        return s.toString();
+    }
+
+    private static boolean openInCustomTab(Uri uri, Context context) {
+        boolean lightTheme = PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean("lightTheme", false);
+        int toolbarColorRes;
+        if (lightTheme) {
+            toolbarColorRes = R.color.custom_tab_toolbar_light;
+        } else {
+            toolbarColorRes = R.color.custom_tab_toolbar_dark;
+        }
+        int toolbarColor = ContextCompat.getColor(context, toolbarColorRes);
+        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+        builder.setToolbarColor(toolbarColor);
+        CustomTabsIntent customTabsIntent = builder.build();
+        try {
+            String packageName = CustomTabsHelper.getPackageNameToUse(context);
+            /* If we cant find a package name, it means theres no browser that supports
+             * Chrome Custom Tabs installed. So, we fallback to the webview */
+            if (packageName == null) {
+                return false;
+            } else {
+                customTabsIntent.intent.setPackage(packageName);
+                customTabsIntent.launchUrl(context, uri);
+            }
+        } catch (ActivityNotFoundException e) {
+            Log.w("URLSpan", "Activity was not found for intent, " + customTabsIntent.toString());
+            return false;
+        }
+        return true;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("lightTheme", false)) {
-            setTheme(R.style.AppTheme_Light);
-        }
+        setTheme(ThemeUtils.getStyle(this));
 
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
@@ -128,20 +185,6 @@ public class LoginActivity extends AppCompatActivity {
         outState.putString("clientId", clientId);
         outState.putString("clientSecret", clientSecret);
         super.onSaveInstanceState(outState);
-    }
-
-    /** Make sure the user-entered text is just a fully-qualified domain name. */
-    @NonNull
-    private static String validateDomain(String s) {
-        // Strip any schemes out.
-        s = s.replaceFirst("http://", "");
-        s = s.replaceFirst("https://", "");
-        // If a username was included (e.g. username@example.com), just take what's after the '@'.
-        int at = s.indexOf('@');
-        if (at != -1) {
-            s = s.substring(at + 1);
-        }
-        return s.trim();
     }
 
     private String getOauthRedirectUri() {
@@ -214,54 +257,6 @@ public class LoginActivity extends AppCompatActivity {
                 editText.setError(getString(R.string.error_invalid_domain));
             }
         }
-    }
-
-    /**
-     * Chain together the key-value pairs into a query string, for either appending to a URL or
-     * as the content of an HTTP request.
-     */
-    @NonNull
-    private static String toQueryString(Map<String, String> parameters) {
-        StringBuilder s = new StringBuilder();
-        String between = "";
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            s.append(between);
-            s.append(Uri.encode(entry.getKey()));
-            s.append("=");
-            s.append(Uri.encode(entry.getValue()));
-            between = "&";
-        }
-        return s.toString();
-    }
-
-    private static boolean openInCustomTab(Uri uri, Context context) {
-        boolean lightTheme = PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("lightTheme", false);
-        int toolbarColorRes;
-        if (lightTheme) {
-            toolbarColorRes = R.color.custom_tab_toolbar_light;
-        } else {
-            toolbarColorRes = R.color.custom_tab_toolbar_dark;
-        }
-        int toolbarColor = ContextCompat.getColor(context, toolbarColorRes);
-        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-        builder.setToolbarColor(toolbarColor);
-        CustomTabsIntent customTabsIntent = builder.build();
-        try {
-            String packageName = CustomTabsHelper.getPackageNameToUse(context);
-            /* If we cant find a package name, it means theres no browser that supports
-             * Chrome Custom Tabs installed. So, we fallback to the webview */
-            if (packageName == null) {
-                return false;
-            } else {
-                customTabsIntent.intent.setPackage(packageName);
-                customTabsIntent.launchUrl(context, uri);
-            }
-        } catch (ActivityNotFoundException e) {
-            Log.w("URLSpan", "Activity was not found for intent, " + customTabsIntent.toString());
-            return false;
-        }
-        return true;
     }
 
     private void redirectUserToAuthorizeAndLogin(EditText editText) {
