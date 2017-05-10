@@ -17,10 +17,12 @@ package com.keylesspalace.tusky.adapter;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spanned;
 import android.view.View;
+import android.view.animation.Interpolator;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -28,11 +30,11 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.keylesspalace.tusky.R;
-import com.keylesspalace.tusky.util.RoundedTransformation;
-import com.keylesspalace.tusky.interfaces.StatusActionListener;
 import com.keylesspalace.tusky.entity.Status;
+import com.keylesspalace.tusky.interfaces.StatusActionListener;
 import com.keylesspalace.tusky.util.DateUtils;
 import com.keylesspalace.tusky.util.LinkHelper;
+import com.keylesspalace.tusky.util.RoundedTransformation;
 import com.keylesspalace.tusky.util.ThemeUtils;
 import com.squareup.picasso.Picasso;
 import com.varunest.sparkbutton.SparkButton;
@@ -64,7 +66,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
     private TextView contentWarningDescription;
     private ToggleButton contentWarningButton;
 
-    StatusViewHolder(View itemView) {
+    StatusViewHolder(final View itemView) {
         super(itemView);
         container = itemView.findViewById(R.id.status_container);
         displayName = (TextView) itemView.findViewById(R.id.status_display_name);
@@ -77,6 +79,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
         replyButton = (ImageButton) itemView.findViewById(R.id.status_reply);
         reblogButton = (SparkButton) itemView.findViewById(R.id.status_reblog);
         favouriteButton = (SparkButton) itemView.findViewById(R.id.status_favourite);
+        favouriteButton.setOnClickListener(createFavouriteButtonListener());
         moreButton = (ImageButton) itemView.findViewById(R.id.status_more);
         reblogged = false;
         favourited = false;
@@ -90,6 +93,46 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                 (TextView) itemView.findViewById(R.id.status_content_warning_description);
         contentWarningButton =
                 (ToggleButton) itemView.findViewById(R.id.status_content_warning_button);
+    }
+
+    @NonNull
+    private View.OnClickListener createFavouriteButtonListener() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!(v instanceof SparkButton)) {
+                    return;
+                }
+                SparkButton nicoru = (SparkButton) v;
+                ImageView nicoruImage = (ImageView) nicoru.findViewById(R.id.ivImage);
+                if (nicoru.isChecked()) {
+                    nicoru.setChecked(false);
+                    nicoruImage.animate()
+                            .rotationBy(450f)
+                            .setDuration(1000L)
+                            .setInterpolator(createNicoruInterpolator())
+                            .start();
+                } else {
+                    nicoru.setChecked(true);
+                    nicoruImage.animate()
+                            .rotationBy(-450f)
+                            .setDuration(1000L)
+                            .setInterpolator(createNicoruInterpolator())
+                            .start();
+                }
+            }
+        };
+    }
+
+    private Interpolator createNicoruInterpolator() {
+        return new Interpolator() {
+            @Override
+            public float getInterpolation(float input) {
+                final double amplitude = Math.E * 4;
+                final double frequency = Math.PI * (4 - 1.0 / 2);
+                return (1 - (float) (Math.pow(amplitude, -input) * Math.cos(input * frequency)));
+            }
+        };
     }
 
     private void setDisplayName(String name) {
@@ -165,7 +208,9 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
         reblogButton.setChecked(reblogged);
     }
 
-    /** This should only be called after setReblogged, in order to override the tint correctly. */
+    /**
+     * This should only be called after setReblogged, in order to override the tint correctly.
+     */
     private void setRebloggingEnabled(boolean enabled) {
         reblogButton.setEnabled(enabled);
 
@@ -207,7 +252,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
 
             previews[i].setVisibility(View.VISIBLE);
 
-            if(previewUrl == null || previewUrl.isEmpty()) {
+            if (previewUrl == null || previewUrl.isEmpty()) {
                 Picasso.with(context)
                         .load(mediaPreviewUnloadedId)
                         .into(previews[i]);
@@ -221,7 +266,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
             final String url = attachments[i].url;
             final Status.MediaAttachment.Type type = attachments[i].type;
 
-            if(url == null || url.isEmpty()) {
+            if (url == null || url.isEmpty()) {
                 previews[i].setOnClickListener(null);
             } else {
                 previews[i].setOnClickListener(new View.OnClickListener() {
