@@ -56,15 +56,11 @@ import retrofit2.Response;
  * overlap functionality. So, I'm momentarily leaving it and hopefully working on those will clear
  * up what needs to be where. */
 public abstract class SFragment extends BaseFragment {
-    public interface OnUserRemovedListener {
-        void onUserRemoved(String accountId);
-    }
-
+    protected static int COMPOSE_RESULT = 1;
     protected String loggedInAccountId;
     protected String loggedInUsername;
     protected MastodonAPI mastodonAPI;
     protected OnUserRemovedListener userRemovedListener;
-    protected static int COMPOSE_RESULT = 1;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -103,7 +99,8 @@ public abstract class SFragment extends BaseFragment {
         startActivityForResult(intent, COMPOSE_RESULT);
     }
 
-    public void onSuccessfulStatus() {}
+    public void onSuccessfulStatus() {
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -133,7 +130,8 @@ public abstract class SFragment extends BaseFragment {
             }
 
             @Override
-            public void onFailure(Call<Status> call, Throwable t) {}
+            public void onFailure(Call<Status> call, Throwable t) {
+            }
         };
 
         Call<Status> call;
@@ -147,7 +145,7 @@ public abstract class SFragment extends BaseFragment {
     }
 
     protected void favourite(final Status status, final boolean favourite,
-            final RecyclerView.Adapter adapter, final int position) {
+                             final RecyclerView.Adapter adapter, final int position) {
         String id = status.getActionableId();
 
         Callback<Status> cb = new Callback<Status>() {
@@ -160,12 +158,13 @@ public abstract class SFragment extends BaseFragment {
                         status.reblog.favourited = favourite;
                     }
 
-                    adapter.notifyItemChanged(position);
+                    adapter.notifyDataSetChanged();
                 }
             }
 
             @Override
-            public void onFailure(Call<Status> call, Throwable t) {}
+            public void onFailure(Call<Status> call, Throwable t) {
+            }
         };
 
         Call<Status> call;
@@ -182,10 +181,12 @@ public abstract class SFragment extends BaseFragment {
         Call<Relationship> call = mastodonAPI.muteAccount(id);
         call.enqueue(new Callback<Relationship>() {
             @Override
-            public void onResponse(Call<Relationship> call, Response<Relationship> response) {}
+            public void onResponse(Call<Relationship> call, Response<Relationship> response) {
+            }
 
             @Override
-            public void onFailure(Call<Relationship> call, Throwable t) {}
+            public void onFailure(Call<Relationship> call, Throwable t) {
+            }
         });
         callList.add(call);
         userRemovedListener.onUserRemoved(id);
@@ -195,10 +196,12 @@ public abstract class SFragment extends BaseFragment {
         Call<Relationship> call = mastodonAPI.blockAccount(id);
         call.enqueue(new Callback<Relationship>() {
             @Override
-            public void onResponse(Call<Relationship> call, retrofit2.Response<Relationship> response) {}
+            public void onResponse(Call<Relationship> call, retrofit2.Response<Relationship> response) {
+            }
 
             @Override
-            public void onFailure(Call<Relationship> call, Throwable t) {}
+            public void onFailure(Call<Relationship> call, Throwable t) {
+            }
         });
         callList.add(call);
         userRemovedListener.onUserRemoved(id);
@@ -208,10 +211,12 @@ public abstract class SFragment extends BaseFragment {
         Call<ResponseBody> call = mastodonAPI.deleteStatus(id);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {}
+            public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
+            }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {}
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+            }
         });
         callList.add(call);
     }
@@ -336,5 +341,9 @@ public abstract class SFragment extends BaseFragment {
         intent.putExtra("status_id", statusId);
         intent.putExtra("status_content", HtmlUtils.toHtml(statusContent));
         startActivity(intent);
+    }
+
+    public interface OnUserRemovedListener {
+        void onUserRemoved(String accountId);
     }
 }

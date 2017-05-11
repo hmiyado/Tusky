@@ -15,6 +15,7 @@
 
 package com.keylesspalace.tusky.adapter;
 
+import android.animation.Animator;
 import android.content.Context;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -79,7 +80,6 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
         replyButton = (ImageButton) itemView.findViewById(R.id.status_reply);
         reblogButton = (SparkButton) itemView.findViewById(R.id.status_reblog);
         favouriteButton = (SparkButton) itemView.findViewById(R.id.status_favourite);
-        favouriteButton.setOnClickListener(createFavouriteButtonListener());
         moreButton = (ImageButton) itemView.findViewById(R.id.status_more);
         reblogged = false;
         favourited = false;
@@ -96,30 +96,66 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
     }
 
     @NonNull
-    private View.OnClickListener createFavouriteButtonListener() {
+    private View.OnClickListener createFavouriteButtonListener(final StatusActionListener listener) {
         return new View.OnClickListener() {
+            private final Animator.AnimatorListener nicoruAnimatorListener = createNicoruAnimatorListener(listener);
+
             @Override
             public void onClick(View v) {
                 if (!(v instanceof SparkButton)) {
                     return;
                 }
+                // animate
                 SparkButton nicoru = (SparkButton) v;
                 ImageView nicoruImage = (ImageView) nicoru.findViewById(R.id.ivImage);
+                final long duration = 1000L;
                 if (nicoru.isChecked()) {
+                    // nicoru -> not nicoru
                     nicoru.setChecked(false);
                     nicoruImage.animate()
                             .rotationBy(450f)
-                            .setDuration(1000L)
+                            .setDuration(duration)
                             .setInterpolator(createNicoruInterpolator())
+                            .setListener(nicoruAnimatorListener)
                             .start();
                 } else {
+                    // not nicoru -> nicoru
                     nicoru.setChecked(true);
                     nicoruImage.animate()
                             .rotationBy(-450f)
-                            .setDuration(1000L)
+                            .setDuration(duration)
                             .setInterpolator(createNicoruInterpolator())
+                            .setListener(nicoruAnimatorListener)
                             .start();
                 }
+            }
+
+            private Animator.AnimatorListener createNicoruAnimatorListener(final StatusActionListener listener) {
+                return new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        // post on favourite
+                        int position = getAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION) {
+                            listener.onFavourite(!favourited, position);
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                };
             }
         };
     }
@@ -230,6 +266,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
     private void setFavourited(boolean favourited) {
         this.favourited = favourited;
         favouriteButton.setChecked(favourited);
+        favouriteButton.setRotation(favourited ? -90f : 0f);
     }
 
     private void setMediaPreviews(final Status.MediaAttachment[] attachments,
@@ -359,21 +396,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                                           @Override
                                           public void onEventAnimationStart(ImageView button, boolean buttonState) {}
                                       });
-        favouriteButton.setEventListener(new SparkEventListener() {
-            @Override
-            public void onEvent(ImageView button, boolean buttonState) {
-                int position = getAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    listener.onFavourite(!favourited, position);
-                }
-            }
-
-            @Override
-            public void onEventAnimationEnd(ImageView button, boolean buttonState) {}
-
-            @Override
-            public void onEventAnimationStart(ImageView button, boolean buttonState) {}
-        });
+        favouriteButton.setOnClickListener(createFavouriteButtonListener(listener));
         moreButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
