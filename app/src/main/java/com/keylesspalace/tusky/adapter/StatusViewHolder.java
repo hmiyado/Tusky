@@ -25,6 +25,7 @@ import android.text.Spanned;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
@@ -113,6 +114,8 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                     RotateAnimation rotateAnimation = new RotateAnimation(0, 360, nicoru.getWidth() / 2, nicoru.getHeight() / 2);
                     rotateAnimation.setDuration(1000);
                     rotateAnimation.setRepeatMode(Animation.INFINITE);
+                    rotateAnimation.setRepeatCount(Animation.INFINITE);
+                    rotateAnimation.setInterpolator(new LinearInterpolator());
                     nicoru.startAnimation(rotateAnimation);
                 }
                 return true;
