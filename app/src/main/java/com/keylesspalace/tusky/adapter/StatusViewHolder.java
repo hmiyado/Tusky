@@ -23,7 +23,9 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spanned;
 import android.view.View;
+import android.view.animation.Animation;
 import android.view.animation.Interpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -35,6 +37,7 @@ import com.keylesspalace.tusky.entity.Status;
 import com.keylesspalace.tusky.interfaces.StatusActionListener;
 import com.keylesspalace.tusky.util.DateUtils;
 import com.keylesspalace.tusky.util.LinkHelper;
+import com.keylesspalace.tusky.util.Log;
 import com.keylesspalace.tusky.util.RoundedTransformation;
 import com.keylesspalace.tusky.util.ThemeUtils;
 import com.squareup.picasso.Picasso;
@@ -93,6 +96,28 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                 (TextView) itemView.findViewById(R.id.status_content_warning_description);
         contentWarningButton =
                 (ToggleButton) itemView.findViewById(R.id.status_content_warning_button);
+    }
+
+    @NonNull
+    private View.OnLongClickListener createFavouriteButtonLongListener(final StatusActionListener listener) {
+        return new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Log.d("LongClickListener", "On Long Clicked");
+                if (!(v instanceof SparkButton)) {
+                    return false;
+                }
+                final SparkButton nicoru = (SparkButton) v;
+                if (!nicoru.isChecked()) {
+                    nicoru.setChecked(true);
+                    RotateAnimation rotateAnimation = new RotateAnimation(0, 360, nicoru.getWidth() / 2, nicoru.getHeight() / 2);
+                    rotateAnimation.setDuration(1000);
+                    rotateAnimation.setRepeatMode(Animation.INFINITE);
+                    nicoru.startAnimation(rotateAnimation);
+                }
+                return true;
+            }
+        };
     }
 
     @NonNull
@@ -397,7 +422,9 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
             public void onEventAnimationStart(ImageView button, boolean buttonState) {
             }
         });
+        favouriteButton.setOnTouchListener(null);
         favouriteButton.setOnClickListener(createFavouriteButtonListener(listener));
+        favouriteButton.setOnLongClickListener(createFavouriteButtonLongListener(listener));
         moreButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
