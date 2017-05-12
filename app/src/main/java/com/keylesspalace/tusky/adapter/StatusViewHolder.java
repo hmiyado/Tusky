@@ -17,6 +17,7 @@ package com.keylesspalace.tusky.adapter;
 
 import android.animation.Animator;
 import android.content.Context;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -31,6 +32,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.keylesspalace.tusky.R;
@@ -102,6 +104,8 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
     @NonNull
     private View.OnLongClickListener createFavouriteButtonLongListener(final StatusActionListener listener) {
         return new View.OnLongClickListener() {
+            private final long duration = 1000;
+
             @Override
             public boolean onLongClick(View v) {
                 Log.d("LongClickListener", "On Long Clicked");
@@ -111,11 +115,41 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                 final SparkButton nicoru = (SparkButton) v;
                 if (!nicoru.isChecked()) {
                     nicoru.setChecked(true);
-                    RotateAnimation rotateAnimation = new RotateAnimation(0, 360, nicoru.getWidth() / 2, nicoru.getHeight() / 2);
-                    rotateAnimation.setDuration(1000);
+                    final RotateAnimation rotateAnimation = new RotateAnimation(0, 360, nicoru.getWidth() / 2, nicoru.getHeight() / 2);
+                    rotateAnimation.setDuration(duration);
                     rotateAnimation.setRepeatMode(Animation.INFINITE);
                     rotateAnimation.setRepeatCount(Animation.INFINITE);
                     rotateAnimation.setInterpolator(new LinearInterpolator());
+                    rotateAnimation.setFillEnabled(true);
+                    rotateAnimation.setFillAfter(true);
+                    rotateAnimation.setAnimationListener(new Animation.AnimationListener() {
+                        private long startTime = 0;
+
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+                            startTime = SystemClock.elapsedRealtime();
+
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            final long endTime = SystemClock.elapsedRealtime();
+                            final float rotation = (float) (endTime - startTime) / duration * 360 % 360;
+
+                            if (rotation >= 240 && rotation <= 300) {
+                                Toast.makeText(nicoru.getContext(), "ニコれました", Toast.LENGTH_LONG).show();
+                                listener.onFavourite(true, getAdapterPosition());
+                            } else {
+                                Toast.makeText(nicoru.getContext(), "ニコれませんでした", Toast.LENGTH_LONG).show();
+                                setFavourited(false);
+                            }
+                        }
+
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+
+                        }
+                    });
                     nicoru.startAnimation(rotateAnimation);
                 }
                 return true;
@@ -127,6 +161,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
     private View.OnClickListener createFavouriteButtonListener(final StatusActionListener listener) {
         return new View.OnClickListener() {
             private final Animator.AnimatorListener nicoruAnimatorListener = createNicoruAnimatorListener(listener);
+            private final long duration = 1000L;
 
             @Override
             public void onClick(View v) {
@@ -135,7 +170,12 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                 }
                 // animate
                 SparkButton nicoru = (SparkButton) v;
-                final long duration = 1000L;
+                Animation animation = nicoru.getAnimation();
+                if (animation != null && !animation.hasEnded()) {
+                    animation.cancel();
+                    return;
+                }
+
                 if (nicoru.isChecked()) {
                     // nicoru -> not nicoru
                     nicoru.setChecked(false);
