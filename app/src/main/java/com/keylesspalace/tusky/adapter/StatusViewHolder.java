@@ -107,12 +107,11 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                 }
                 // animate
                 SparkButton nicoru = (SparkButton) v;
-                ImageView nicoruImage = (ImageView) nicoru.findViewById(R.id.ivImage);
                 final long duration = 1000L;
                 if (nicoru.isChecked()) {
                     // nicoru -> not nicoru
                     nicoru.setChecked(false);
-                    nicoruImage.animate()
+                    nicoru.animate()
                             .rotationBy(450f)
                             .setDuration(duration)
                             .setInterpolator(createNicoruInterpolator())
@@ -121,7 +120,7 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
                 } else {
                     // not nicoru -> nicoru
                     nicoru.setChecked(true);
-                    nicoruImage.animate()
+                    nicoru.animate()
                             .rotationBy(-450f)
                             .setDuration(duration)
                             .setInterpolator(createNicoruInterpolator())
@@ -382,20 +381,22 @@ class StatusViewHolder extends RecyclerView.ViewHolder {
             }
         });
         reblogButton.setEventListener(new SparkEventListener() {
-                                          @Override
-                                          public void onEvent(ImageView button, boolean buttonState) {
-                                              int position = getAdapterPosition();
-                                              if (position != RecyclerView.NO_POSITION) {
-                                                  listener.onReblog(!reblogged, position);
-                                              }
-                                          }
+            @Override
+            public void onEvent(ImageView button, boolean buttonState) {
+                int position = getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    listener.onReblog(!reblogged, position);
+                }
+            }
 
-                                          @Override
-                                          public void onEventAnimationEnd(ImageView button, boolean buttonState) {}
+            @Override
+            public void onEventAnimationEnd(ImageView button, boolean buttonState) {
+            }
 
-                                          @Override
-                                          public void onEventAnimationStart(ImageView button, boolean buttonState) {}
-                                      });
+            @Override
+            public void onEventAnimationStart(ImageView button, boolean buttonState) {
+            }
+        });
         favouriteButton.setOnClickListener(createFavouriteButtonListener(listener));
         moreButton.setOnClickListener(new View.OnClickListener() {
             @Override
